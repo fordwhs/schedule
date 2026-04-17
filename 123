@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>佳靜的排班表系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F5F0;--surface:#fff;--surface2:#F0EDE6;
+  --border:#E2DDD6;--border2:#C8C2B8;
+  --text:#1A1714;--text2:#6B6560;--text3:#9E9890;
+  --hp:#1C3A5E;--kl:#2D5A3D;
+  --sa:#2A6B3C;--sa-bg:#E6F4EA;
+  --sp:#1A4A8A;--sp-bg:#E6EFF8;
+  --sn:#5A2D8A;--sn-bg:#F0E8F8;
+  --so:#9E3A2A;--so-bg:#FAE8E6;
+  --sc:#7A5020;--sc-bg:#FAF0E0;
+  --sadj:#6B3A8A;--sadj-bg:#F3EAFA;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.10);
+  --r:8px;--rl:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;user-select:none}
+input,select,textarea,[contenteditable]{user-select:text}
+
+/* ── Header ── */
+.hdr{background:var(--text);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+.hdr-title{font-size:14px;font-weight:500;letter-spacing:.08em;display:flex;align-items:center;gap:10px}
+.hdr-title span{font-size:10px;font-weight:400;letter-spacing:.2em;color:rgba(255,255,255,.4);font-family:'DM Mono',monospace}
+.hdr-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+select.sm{appearance:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 28px 5px 10px;border-radius:var(--r);font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='rgba(255,255,255,.5)' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+select.sm:focus{outline:none}
+.btn{padding:5px 14px;border-radius:var(--r);border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.2)}
+.btn.exp{background:#fff;color:var(--text);font-weight:500;border-color:#fff}
+.btn.exp:hover{background:rgba(255,255,255,.88)}
+
+/* ── Week nav bar ── */
+.week-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:90;box-shadow:var(--shadow)}
+.week-label{font-size:14px;font-weight:500;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:.04em}
+.week-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.week-nav{display:flex;align-items:center;gap:6px}
+.wbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1}
+.wbtn:hover{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+.wbtn:disabled{opacity:.3;cursor:default}
+.week-dots{display:flex;gap:4px;align-items:center}
+.wdot{width:7px;height:7px;border-radius:50%;background:var(--border2);cursor:pointer;transition:all .15s}
+.wdot.active{background:var(--text);transform:scale(1.2)}
+
+/* ── Main ── */
+.main{padding:16px 20px;max-width:1200px;margin:0 auto}
+
+/* ── Legend ── */
+.legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:9px 14px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px}
+.li{display:flex;align-items:center;gap:5px;color:var(--text2)}
+.ls{color:var(--border2)}
+.lh{margin-left:auto;color:var(--text3);font-size:11px}
+.chip{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-block;line-height:1.4;text-align:center}
+.cA{background:var(--sa-bg);color:var(--sa)}
+.cP{background:var(--sp-bg);color:var(--sp)}
+.cN{background:var(--sn-bg);color:var(--sn)}
+.cO{background:var(--so-bg);color:var(--so)}
+.cC{background:var(--sc-bg);color:var(--sc);font-size:9px;padding:2px 6px}
+.cADJ{background:var(--sadj-bg);color:var(--sadj);font-size:9px;padding:2px 6px;line-height:1.5}
+
+/* ── Section ── */
+.section{margin-bottom:24px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sl{display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%}
+.sn-txt{font-size:15px;font-weight:500;letter-spacing:.05em}
+.sc-txt{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.sh-r{display:flex;align-items:center;gap:8px}
+.btn-add{font-size:12px;padding:4px 12px;border-radius:20px;border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;font-family:'Noto Sans TC',sans-serif}
+.btn-add:hover{border-color:var(--text2);color:var(--text);background:var(--surface2)}
+.btn-manage{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;font-family:'Noto Sans TC',sans-serif}
+.btn-manage:hover{border-color:var(--text2);color:var(--text);background:var(--surface2)}
+.emp-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-bottom:4px}
+.emp-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg);font-size:13px}
+.emp-row-name{font-weight:500;color:var(--text)}
+.emp-del{padding:3px 10px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--so);font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .15s}
+.emp-del:hover{background:var(--so-bg);border-color:var(--so)}
+
+/* ── Table ── */
+.tw{background:var(--surface);border-radius:var(--rl);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+col.col-name{width:120px}
+col.col-day{width:calc((100% - 120px - 44px) / 7)}
+col.col-act{width:44px}
+
+thead tr{background:var(--surface2);border-bottom:2px solid var(--border)}
+thead th{padding:10px 4px;text-align:center;font-weight:500;font-size:11px;color:var(--text2);border-right:1px solid var(--border)}
+thead th.th-name{text-align:left;padding-left:16px;color:var(--text2);font-size:11px}
+thead th.we{color:var(--so)}
+thead th.today-h{background:rgba(28,58,94,.06);color:var(--hp)}
+thead th:last-child{border-right:none}
+.th-date{font-size:16px;font-weight:500;line-height:1;display:block;color:var(--text)}
+.th-day{font-size:10px;margin-top:2px;display:block}
+
+tbody tr{border-bottom:1px solid var(--border);transition:background .08s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#faf9f6}
+tbody td{padding:0;border-right:1px solid var(--border);vertical-align:middle}
+tbody td.nc{padding:0 6px 0 16px;text-align:left;background:var(--surface);border-right:2px solid var(--border)}
+tbody tr:hover td.nc{background:#faf9f6}
+tbody td.today-c{background:rgba(28,58,94,.03)}
+tbody td:last-child{border-right:none}
+
+/* ── Name cell ── */
+.nw{display:flex;align-items:center;gap:4px;padding:6px 0}
+.en{font-size:13px;font-weight:500;color:var(--text);border-radius:4px;padding:1px 4px;min-width:40px;cursor:text;transition:background .12s;outline:none}
+.en:hover{background:var(--surface2)}
+.en:focus{outline:2px solid var(--border2);background:var(--surface)}
+.fb{font-size:10px;color:var(--text3);border:none;background:none;cursor:pointer;padding:2px 3px;border-radius:3px;opacity:0;transition:opacity .15s;line-height:1;font-family:'Noto Sans TC',sans-serif}
+tbody tr:hover .fb{opacity:1}
+.fb:hover{background:var(--surface2);color:var(--text2)}
+
+/* ── Cell ── */
+.cell{min-height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:4px 6px;transition:background .08s;-webkit-touch-callout:none;-webkit-user-select:none}
+.cell:hover{background:var(--surface2)}
+.cell.dov{outline:2px solid var(--text2);outline-offset:-2px}
+.ce{color:var(--border);font-size:20px;font-weight:200;line-height:1;transition:color .1s}
+.cell:hover .ce{color:var(--border2)}
+
+.del-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--text3);cursor:pointer;border-radius:50%;font-size:14px;margin:auto;transition:all .15s}
+.del-btn:hover{background:var(--so-bg);color:var(--so)}
+
+/* ── Modals ── */
+.mb{display:none;position:fixed;inset:0;background:rgba(15,12,10,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.mb.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--rl);border:1px solid var(--border);box-shadow:var(--shadow-lg);padding:22px;min-width:280px;max-width:380px;width:90%;animation:pi .16s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pi{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:3px}
+.modal .sub{font-size:12px;color:var(--text2);margin-bottom:16px}
+.mf label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500;letter-spacing:.04em}
+.mf input[type=text],.mf input[type=time]{width:100%;padding:8px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;margin-bottom:12px;-webkit-appearance:none}
+.mf input:focus{outline:none;border-color:var(--border2)}
+.ct{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.bc{padding:7px 14px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer}
+.bc:hover{background:var(--surface2)}
+.bok{padding:7px 18px;border-radius:var(--r);border:none;background:var(--text);color:#fff;font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;font-weight:500}
+.bok:hover{background:#333}
+.bclr{padding:7px 12px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--so);font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;margin-right:auto}
+.bclr:hover{background:var(--so-bg)}
+
+/* Fill opts */
+.fo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.fopt{padding:12px 8px;border-radius:var(--r);border:1.5px solid var(--border);cursor:pointer;text-align:center;transition:all .12s;font-family:'Noto Sans TC',sans-serif}
+.fopt:hover{border-color:var(--border2);transform:translateY(-1px)}
+.fl{font-size:13px;font-weight:500;display:block}
+.ft{font-size:9px;color:var(--text2);font-family:'DM Mono',monospace}
+
+/* Adj modal */
+.adj-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.adj-bases{display:flex;flex-direction:column;gap:8px}
+.adj-base-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--border);transition:all .12s}
+.adj-base-opt:hover{border-color:var(--border2)}
+.adj-base-opt input{accent-color:var(--text)}
+.adj-preview{background:var(--sadj-bg);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--sadj);margin-top:12px}
+
+/* Context menu */
+.ctx{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:4px 0;min-width:168px;display:none}
+.ctx.open{display:block;animation:pi .12s ease}
+.ci{padding:8px 16px;font-size:13px;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:8px}
+.ci:hover{background:var(--surface2)}
+.ci .chip{font-size:10px;padding:2px 7px}
+.csep{height:1px;background:var(--border);margin:4px 0}
+
+@media print{
+  .hdr-r,.btn-manage,.del-btn,.fb,.week-bar{display:none!important}
+  .mb,.ctx{display:none!important}
+  .hdr{position:static}
+  .main{padding:6px}
+  .tw{box-shadow:none;border-radius:4px}
+  .cell{min-height:34px}
+  .chip{font-size:8px;padding:1px 4px}
+  /* hide screen label, show full time */
+  .chip[data-print] .chip-screen{display:none}
+  .chip[data-print]::after{content:attr(data-print);font-size:8px;white-space:pre}
+  @page{size:A4 landscape;margin:8mm}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">佳靜的排班表系統</div>
+  <div class="hdr-r">
+    <select class="sm" id="monthSel" onchange="changeMonth()">
+      <option value="5">2026年 5月</option>
+      <option value="6">2026年 6月</option>
+      <option value="7">2026年 7月</option>
+      <option value="8">2026年 8月</option>
+      <option value="9">2026年 9月</option>
+      <option value="10">2026年 10月</option>
+      <option value="11">2026年 11月</option>
+      <option value="12">2026年 12月</option>
+    </select>
+    <button class="btn exp" onclick="window.print()">匯出 PDF</button>
+  </div>
+</div>
+
+<!-- 週導航列 -->
+<div class="week-bar">
+  <div>
+    <div class="week-label" id="week-label"></div>
+    <div class="week-sub" id="week-sub"></div>
+  </div>
+  <div class="week-nav">
+    <button class="wbtn" id="btn-prev" onclick="goPrev()">&#8592;</button>
+    <div class="week-dots" id="week-dots"></div>
+    <button class="wbtn" id="btn-next" onclick="goNext()">&#8594;</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="legend">
+    <div class="li"><span class="chip cA">早</span>07–15</div>
+    <div class="ls">·</div>
+    <div class="li"><span class="chip cP">晚</span>15–23</div>
+    <div class="ls">·</div>
+    <div class="li"><span class="chip cN">夜</span>23–07</div>
+    <div class="ls">·</div>
+    <div class="li"><span class="chip cO">休</span>放假</div>
+    <div class="ls">·</div>
+    <div class="li"><span class="chip cADJ">調</span>彈性工時</div>
+    <div class="lh">點擊循環切換　｜　拖曳複製多天　｜　右鍵更多選項</div>
+  </div>
+
+  <div class="section">
+    <div class="sh">
+      <div class="sl">
+        <div class="dot" style="background:var(--hp)"></div>
+        <div class="sn-txt" style="color:var(--hp)">宏平門市</div>
+        <div class="sc-txt" id="hp-cnt"></div>
+      </div>
+      <div class="sh-r">
+        <button class="btn-manage" onclick="openManage('hp')">管理員工</button>
+      </div>
+    </div>
+    <div class="tw" id="hp-wrap"></div>
+  </div>
+
+  <div class="section">
+    <div class="sh">
+      <div class="sl">
+        <div class="dot" style="background:var(--kl)"></div>
+        <div class="sn-txt" style="color:var(--kl)">康利門市</div>
+        <div class="sc-txt" id="kl-cnt"></div>
+      </div>
+      <div class="sh-r">
+        <button class="btn-manage" onclick="openManage('kl')">管理員工</button>
+      </div>
+    </div>
+    <div class="tw" id="kl-wrap"></div>
+  </div>
+</div>
+
+<!-- 調整工時 modal -->
+<div class="mb" id="mb-adj" onclick="if(event.target===this)closeAdj()">
+  <div class="modal" style="max-width:400px">
+    <h3 id="adj-title">彈性調整工時</h3>
+    <div class="sub" id="adj-sub"></div>
+    <div class="adj-grid">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:500;letter-spacing:.04em">以哪個班次為基礎</div>
+        <div class="adj-bases">
+          <label class="adj-base-opt"><input type="radio" name="adjBase" value="A"> <span class="chip cA" style="font-size:10px;padding:1px 7px">早</span> 早班</label>
+          <label class="adj-base-opt"><input type="radio" name="adjBase" value="P"> <span class="chip cP" style="font-size:10px;padding:1px 7px">晚</span> 晚班</label>
+          <label class="adj-base-opt"><input type="radio" name="adjBase" value="N"> <span class="chip cN" style="font-size:10px;padding:1px 7px">夜</span> 大夜班</label>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:500;letter-spacing:.04em">實際上下班時間</div>
+        <div class="mf"><label>上班時間</label><input type="time" id="adjS" value="07:00"></div>
+        <div class="mf"><label>下班時間</label><input type="time" id="adjE" value="15:00"></div>
+      </div>
+    </div>
+    <div class="adj-preview" id="adj-preview"></div>
+    <div class="mfoot">
+      <button class="bclr" onclick="clearAdj()">清除</button>
+      <button class="bc" onclick="closeAdj()">取消</button>
+      <button class="bok" onclick="saveAdj()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 自訂時間 modal -->
+<div class="mb" id="mb-custom" onclick="if(event.target===this)closeCustom()">
+  <div class="modal" style="max-width:300px">
+    <h3 id="ct-title">自訂時間</h3>
+    <div class="sub" id="ct-sub"></div>
+    <div class="ct">
+      <div class="mf"><label>開始</label><input type="time" id="cS" value="08:00"></div>
+      <div class="mf"><label>結束</label><input type="time" id="cE" value="17:00"></div>
+    </div>
+    <div class="mfoot">
+      <button class="bclr" onclick="clearCustom()">清除</button>
+      <button class="bc" onclick="closeCustom()">取消</button>
+      <button class="bok" onclick="saveCustom()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 整月填入 modal -->
+<div class="mb" id="mb-fill" onclick="if(event.target===this)closeFill()">
+  <div class="modal">
+    <h3 id="fi-title">整月填入</h3>
+    <div class="sub" id="fi-sub"></div>
+    <div class="fo">
+      <div class="fopt" onclick="doFill('A')"><span class="fl" style="color:var(--sa)">早班</span><span class="ft">07:00–15:00</span></div>
+      <div class="fopt" onclick="doFill('P')"><span class="fl" style="color:var(--sp)">晚班</span><span class="ft">15:00–23:00</span></div>
+      <div class="fopt" onclick="doFill('N')"><span class="fl" style="color:var(--sn)">大夜班</span><span class="ft">23:00–07:00</span></div>
+      <div class="fopt" onclick="doFill('OFF')"><span class="fl" style="color:var(--so)">放假</span><span class="ft">—</span></div>
+    </div>
+    <div class="mfoot">
+      <button class="bclr" onclick="doFill(null)">清除整月</button>
+      <button class="bc" onclick="closeFill()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 管理員工 modal -->
+<div class="mb" id="mb-manage" onclick="if(event.target===this)closeManage()">
+  <div class="modal" style="max-width:340px">
+    <h3 id="mg-title">管理員工</h3>
+    <div class="sub" id="mg-sub"></div>
+    <div class="emp-list" id="mg-list"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input type="text" id="mg-name" placeholder="輸入姓名新增員工" maxlength="10"
+        style="flex:1;padding:8px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px"
+        onkeydown="if(event.key==='Enter')confirmManageAdd()">
+      <button class="bok" onclick="confirmManageAdd()" style="padding:8px 14px;white-space:nowrap">＋ 新增</button>
+    </div>
+    <div class="mfoot" style="margin-top:12px">
+      <button class="bc" onclick="closeManage()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 刪除確認 modal -->
+<div class="mb" id="mb-del" onclick="if(event.target===this)closeDel()">
+  <div class="modal" style="max-width:300px">
+    <h3>刪除員工</h3>
+    <div class="sub" id="dl-msg" style="margin-top:6px"></div>
+    <div class="mfoot">
+      <button class="bc" onclick="closeDel()">取消</button>
+      <button class="bok" style="background:var(--so)" onclick="confirmDel()">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 右鍵選單 -->
+<div class="ctx" id="ctx">
+  <div class="ci" onclick="ctxSet('A')"><span class="chip cA">早</span>早班 07–15</div>
+  <div class="ci" onclick="ctxSet('P')"><span class="chip cP">晚</span>晚班 15–23</div>
+  <div class="ci" onclick="ctxSet('N')"><span class="chip cN">夜</span>大夜班 23–07</div>
+  <div class="ci" onclick="ctxSet('OFF')"><span class="chip cO">休</span>放假</div>
+  <div class="csep"></div>
+  <div class="ci" onclick="ctxAdj()"><span class="chip cADJ" style="font-size:10px;padding:2px 6px">調</span>彈性調整工時…</div>
+  <div class="ci" onclick="ctxCustom()">⚙ 完全自訂時間…</div>
+  <div class="csep"></div>
+  <div class="ci" onclick="ctxClear()" style="color:var(--so)">✕ 清除</div>
+</div>
+
+<script>
+const YEAR = 2026;
+let month = 5;
+let weekIdx = 0; // 0-based week index within month
+
+const CYCLE = [null,'A','P','N','OFF','ADJ'];
+const SI = { A:{l:'早',c:'cA'}, P:{l:'晚',c:'cP'}, N:{l:'夜',c:'cN'}, OFF:{l:'休',c:'cO'} };
+const BASE_TIMES = { A:{s:'07:00',e:'15:00'}, P:{s:'15:00',e:'23:00'}, N:{s:'23:00',e:'07:00'} };
+
+const stores = {
+  hp:{ employees:['賴淑芬','黃沛宣','洪雅萍','陳月玫','李佳靜','謝佳穎','楊瑞明','林育瑄'], data:{} },
+  kl:{ employees:['邱妤琁','黃貞麗','廖宏昌','周佳鋐','紀松伶','陳玥綺','楊鴻偉','李英雄','林澄偉'], data:{} }
+};
+
+// ── Date helpers ──
+const dim  = (y,m) => new Date(y,m,0).getDate();
+const dow  = (y,m,d) => new Date(y,m-1,d).getDay(); // 0=Sun
+const dn   = d => '日一二三四五六'[d];
+const isWE = d => d===0||d===6;
+const K    = (sid,emp,d) => `${sid}|${emp}|${month}|${d}`;
+
+// Build array of weeks: each week is array of day numbers (Sun–Sat, null if outside month)
+function getWeeks(y, m) {
+  const total = dim(y, m);
+  const firstDow = dow(y, m, 1); // day-of-week of 1st
+  const weeks = [];
+  let week = [];
+  // pad start
+  for (let i=0; i<firstDow; i++) week.push(null);
+  for (let d=1; d<=total; d++) {
+    week.push(d);
+    if (week.length === 7) { weeks.push(week); week = []; }
+  }
+  // pad end
+  if (week.length > 0) {
+    while (week.length < 7) week.push(null);
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+function todayDayOfMonth() {
+  const t = new Date();
+  if (t.getFullYear()===YEAR && t.getMonth()+1===month) return t.getDate();
+  return null;
+}
+
+// ── Week navigation ──
+function changeMonth() {
+  month = parseInt(document.getElementById('monthSel').value);
+  weekIdx = 0;
+  renderAll();
+}
+
+function goPrev() {
+  if (weekIdx > 0) { weekIdx--; renderAll(); }
+}
+
+function goNext() {
+  const weeks = getWeeks(YEAR, month);
+  if (weekIdx < weeks.length-1) { weekIdx++; renderAll(); }
+}
+
+function goWeek(i) { weekIdx = i; renderAll(); }
+
+// ── Render ──
+function renderAll() {
+  const weeks = getWeeks(YEAR, month);
+  // clamp
+  if (weekIdx >= weeks.length) weekIdx = weeks.length-1;
+  const week = weeks[weekIdx];
+
+  // Week nav bar
+  const days = week.filter(Boolean);
+  const first = days[0], last = days[days.length-1];
+  document.getElementById('week-label').textContent =
+    `${YEAR} / ${String(month).padStart(2,'0')}　第 ${weekIdx+1} 週`;
+  document.getElementById('week-sub').textContent =
+    `${month}月${first}日（${dn(dow(YEAR,month,first))}）－ ${month}月${last}日（${dn(dow(YEAR,month,last))}）`;
+
+  // dots
+  const dotsEl = document.getElementById('week-dots');
+  dotsEl.innerHTML = weeks.map((_,i) =>
+    `<div class="wdot${i===weekIdx?' active':''}" onclick="goWeek(${i})" title="第${i+1}週"></div>`
+  ).join('');
+
+  document.getElementById('btn-prev').disabled = weekIdx===0;
+  document.getElementById('btn-next').disabled = weekIdx===weeks.length-1;
+
+  renderStore('hp', week);
+  renderStore('kl', week);
+}
+
+const PRINT_LABEL = {
+  A:'早班\n07:00–15:00',
+  P:'晚班\n15:00–23:00',
+  N:'大夜班\n23:00–07:00',
+  OFF:'休假',
+};
+
+function chipHTML(sh) {
+  if (!sh) return '<span class="ce">+</span>';
+  if (sh.type==='C') {
+    return `<span class="chip cC" data-print="${sh.start}–${sh.end}"><span class="chip-screen">${sh.start}<br>${sh.end}</span></span>`;
+  }
+  if (sh.type==='ADJ') {
+    const bl = sh.base ? SI[sh.base].l : '調';
+    const printTxt = `${bl}班調整\n${sh.start}–${sh.end}`;
+    return `<span class="chip cADJ" data-print="${printTxt}"><span class="chip-screen">${bl}調<br>${sh.start}–${sh.end}</span></span>`;
+  }
+  const printTxt = PRINT_LABEL[sh.type] || SI[sh.type].l;
+  return `<span class="chip ${SI[sh.type].c}" data-print="${printTxt}"><span class="chip-screen">${SI[sh.type].l}</span></span>`;
+}
+
+function renderStore(sid, week) {
+  const st = stores[sid];
+  document.getElementById(sid+'-cnt').textContent = st.employees.length+' 人';
+  const today = todayDayOfMonth();
+
+  // colgroup
+  let h = '<colgroup><col class="col-name">';
+  for (let i=0;i<7;i++) h += '<col class="col-day">';
+  h += '</colgroup>';
+
+  // thead
+  h += '<thead><tr><th class="th-name">姓名</th>';
+  const DOW_NAMES = ['日','一','二','三','四','五','六'];
+  week.forEach((d,i) => {
+    const isToday = d && d===today;
+    const we = isWE(i);
+    const cls = [we?'we':'', isToday?'today-h':''].filter(Boolean).join(' ');
+    if (d) {
+      h += `<th class="${cls}"><span class="th-date">${d}</span><span class="th-day">${DOW_NAMES[i]}</span></th>`;
+    } else {
+      h += `<th></th>`;
+    }
+  });
+  h += '<th></th></tr></thead>';
+
+  // tbody
+  h += '<tbody>';
+  st.employees.forEach((emp, ei) => {
+    h += `<tr><td class="nc"><div class="nw">
+      <span class="en" contenteditable="true" data-sid="${sid}" data-ei="${ei}" onblur="renameBlur(this)" onkeydown="renameKey(event,this)">${emp}</span>
+      <button class="fb" onclick="openFill('${sid}',${ei})" title="整月填入">▦</button>
+    </div></td>`;
+    week.forEach((d, i) => {
+      const we = isWE(i);
+      const isToday = d && d===today;
+      const tdCls = [isToday?'today-c':''].filter(Boolean).join(' ');
+      if (!d) { h += `<td class="${tdCls}"></td>`; return; }
+      const sh = st.data[K(sid,emp,d)];
+      h += `<td class="${tdCls}"><div class="cell" data-sid="${sid}" data-ei="${ei}" data-d="${d}"
+        onclick="cycleCell('${sid}',${ei},${d})"
+        ondblclick="clearCell('${sid}',${ei},${d})"
+        oncontextmenu="openCtx(event,'${sid}',${ei},${d})"
+        onmousedown="dStart(event,'${sid}',${ei},${d})"
+        onmouseenter="dEnter(event,'${sid}',${ei},${d})"
+        ontouchstart="tStart(event,'${sid}',${ei},${d})"
+        ontouchmove="tMove(event)"
+        ontouchend="tEnd(event,'${sid}',${ei},${d})"
+      >${chipHTML(sh)}</div></td>`;
+    });
+    h += `</tr>`;
+  });
+  h += '</tbody>';
+
+  document.getElementById(sid+'-wrap').innerHTML = `<table>${h}</table>`;
+}
+
+function setCell(sid,ei,d) {
+  const emp = stores[sid].employees[ei];
+  const sh = stores[sid].data[K(sid,emp,d)];
+  const el = document.querySelector(`.cell[data-sid="${sid}"][data-ei="${ei}"][data-d="${d}"]`);
+  if (el) el.innerHTML = chipHTML(sh);
+}
+
+// ── Cycle ──
+let lastClick = { sid:null, ei:null, d:null, t:0 };
+function cycleCell(sid,ei,d) {
+  if (isDrag) return;
+  // suppress the first click of a double-click
+  const now = Date.now();
+  if (lastClick.sid===sid && lastClick.ei===ei && lastClick.d===d && now-lastClick.t < 350) return;
+  lastClick = { sid, ei, d, t: now };
+  const emp = stores[sid].employees[ei];
+  const k = K(sid,emp,d);
+  const cur = stores[sid].data[k];
+  const idx = CYCLE.indexOf(cur?cur.type:null);
+  const nxt = CYCLE[(idx+1)%CYCLE.length];
+  if (nxt===null) { delete stores[sid].data[k]; setCell(sid,ei,d); }
+  else if (nxt==='ADJ') { openAdj(sid,ei,d); }
+  else { stores[sid].data[k]={type:nxt}; setCell(sid,ei,d); }
+}
+
+function clearCell(sid,ei,d) {
+  if (isDrag) return;
+  lastClick = { sid:null, ei:null, d:null, t:0 }; // reset so next click works fresh
+  const emp = stores[sid].employees[ei];
+  delete stores[sid].data[K(sid,emp,d)];
+  setCell(sid,ei,d);
+}
+
+// ── Drag ──
+let isDrag=false, dSrc=null;
+function dStart(e,sid,ei,d) {
+  if(e.button!==0) return;
+  isDrag=false; dSrc={sid,ei,d};
+  document.addEventListener('mouseup',dEnd,{once:true});
+}
+function dEnter(e,sid,ei,d) {
+  if(!dSrc||dSrc.sid!==sid||dSrc.ei!==ei||e.buttons!==1||d===dSrc.d) return;
+  isDrag=true;
+  const emp=stores[sid].employees[ei];
+  const srcSh=stores[sid].data[K(sid,emp,dSrc.d)];
+  const from=Math.min(dSrc.d,d), to=Math.max(dSrc.d,d);
+  for(let dd=from;dd<=to;dd++){
+    const k=K(sid,emp,dd);
+    if(srcSh) stores[sid].data[k]={...srcSh}; else delete stores[sid].data[k];
+    setCell(sid,ei,dd);
+  }
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('dov'));
+  document.querySelectorAll(`.cell[data-sid="${sid}"][data-ei="${ei}"]`).forEach(c=>{
+    const dd=parseInt(c.dataset.d); if(dd>=from&&dd<=to) c.classList.add('dov');
+  });
+}
+function dEnd() {
+  document.querySelectorAll('.cell.dov').forEach(c=>c.classList.remove('dov'));
+  setTimeout(()=>{isDrag=false;dSrc=null;},50);
+}
+
+// ── Long-press (mobile context menu) ──
+let lpTimer=null, lpMoved=false;
+const LP_DELAY=500;
+
+function tStart(e,sid,ei,d){
+  lpMoved=false;
+  lpTimer=setTimeout(()=>{
+    if(lpMoved) return;
+    // vibrate feedback if available
+    if(navigator.vibrate) navigator.vibrate(30);
+    // synthesise a position from touch
+    const t=e.touches[0];
+    const fakeEvt={preventDefault:()=>{},clientX:t.clientX,clientY:t.clientY};
+    openCtx(fakeEvt,sid,ei,d);
+    // prevent the subsequent click from cycling
+    e.target._lpFired=true;
+  },LP_DELAY);
+}
+function tMove(e){
+  lpMoved=true;
+  clearTimeout(lpTimer);
+}
+function tEnd(e,sid,ei,d){
+  clearTimeout(lpTimer);
+  if(e.target._lpFired){
+    e.target._lpFired=false;
+    e.preventDefault(); // suppress click
+  }
+}
+
+// ── Context menu ──
+let ctxT=null;
+const ctxEl=document.getElementById('ctx');
+function openCtx(e,sid,ei,d) {
+  e.preventDefault(); closeCtx();
+  ctxT={sid,ei,d};
+  ctxEl.style.left=Math.min(e.clientX,innerWidth-180)+'px';
+  ctxEl.style.top=Math.min(e.clientY,innerHeight-250)+'px';
+  ctxEl.classList.add('open');
+}
+function closeCtx(){ ctxEl.classList.remove('open'); ctxT=null; }
+function ctxSet(type){
+  if(!ctxT) return;
+  const {sid,ei,d}=ctxT, emp=stores[sid].employees[ei];
+  stores[sid].data[K(sid,emp,d)]={type}; setCell(sid,ei,d); closeCtx();
+}
+function ctxClear(){
+  if(!ctxT) return;
+  const {sid,ei,d}=ctxT, emp=stores[sid].employees[ei];
+  delete stores[sid].data[K(sid,emp,d)]; setCell(sid,ei,d); closeCtx();
+}
+function ctxAdj(){ if(!ctxT) return; const t=ctxT; closeCtx(); openAdj(t.sid,t.ei,t.d); }
+function ctxCustom(){ if(!ctxT) return; const t=ctxT; closeCtx(); openCustom(t.sid,t.ei,t.d); }
+document.addEventListener('click',e=>{ if(!ctxEl.contains(e.target)) closeCtx(); });
+
+// ── Adj modal ──
+let adjT=null;
+function openAdj(sid,ei,d){
+  adjT={sid,ei,d};
+  const emp=stores[sid].employees[ei];
+  document.getElementById('adj-title').textContent='彈性調整工時';
+  document.getElementById('adj-sub').textContent=`${emp}　${YEAR}年${month}月${d}日（${dn(dow(YEAR,month,d))}）`;
+  const ex=stores[sid].data[K(sid,emp,d)];
+  const base=(ex&&ex.base)?ex.base:'A';
+  document.querySelectorAll('input[name="adjBase"]').forEach(r=>{ r.checked=(r.value===base); });
+  document.getElementById('adjS').value=(ex&&ex.start)||BASE_TIMES[base].s;
+  document.getElementById('adjE').value=(ex&&ex.end)||BASE_TIMES[base].e;
+  updateAdjPreview();
+  document.querySelectorAll('input[name="adjBase"]').forEach(r=>{
+    r.onchange=()=>{
+      document.getElementById('adjS').value=BASE_TIMES[r.value].s;
+      document.getElementById('adjE').value=BASE_TIMES[r.value].e;
+      updateAdjPreview();
+    };
+  });
+  document.getElementById('adjS').oninput=updateAdjPreview;
+  document.getElementById('adjE').oninput=updateAdjPreview;
+  document.getElementById('mb-adj').classList.add('open');
+}
+function updateAdjPreview(){
+  const base=document.querySelector('input[name="adjBase"]:checked');
+  const s=document.getElementById('adjS').value;
+  const e=document.getElementById('adjE').value;
+  const bl=base?{A:'早班',P:'晚班',N:'大夜班'}[base.value]:'';
+  document.getElementById('adj-preview').textContent=`${bl}　調整為　${s} – ${e}`;
+}
+function closeAdj(){ document.getElementById('mb-adj').classList.remove('open'); adjT=null; }
+function saveAdj(){
+  if(!adjT) return;
+  const {sid,ei,d}=adjT, emp=stores[sid].employees[ei];
+  const base=document.querySelector('input[name="adjBase"]:checked');
+  stores[sid].data[K(sid,emp,d)]={type:'ADJ',base:base?base.value:'A',start:document.getElementById('adjS').value,end:document.getElementById('adjE').value};
+  setCell(sid,ei,d); closeAdj();
+}
+function clearAdj(){
+  if(!adjT) return;
+  const {sid,ei,d}=adjT, emp=stores[sid].employees[ei];
+  delete stores[sid].data[K(sid,emp,d)]; setCell(sid,ei,d); closeAdj();
+}
+
+// ── Custom modal ──
+let customT=null;
+function openCustom(sid,ei,d){
+  customT={sid,ei,d};
+  const emp=stores[sid].employees[ei];
+  document.getElementById('ct-sub').textContent=`${emp}　${YEAR}年${month}月${d}日`;
+  const ex=stores[sid].data[K(sid,emp,d)];
+  document.getElementById('cS').value=(ex&&ex.start)||'08:00';
+  document.getElementById('cE').value=(ex&&ex.end)||'17:00';
+  document.getElementById('mb-custom').classList.add('open');
+}
+function closeCustom(){ document.getElementById('mb-custom').classList.remove('open'); customT=null; }
+function saveCustom(){
+  if(!customT) return;
+  const {sid,ei,d}=customT, emp=stores[sid].employees[ei];
+  stores[sid].data[K(sid,emp,d)]={type:'C',start:document.getElementById('cS').value,end:document.getElementById('cE').value};
+  setCell(sid,ei,d); closeCustom();
+}
+function clearCustom(){
+  if(!customT) return;
+  const {sid,ei,d}=customT, emp=stores[sid].employees[ei];
+  delete stores[sid].data[K(sid,emp,d)]; setCell(sid,ei,d); closeCustom();
+}
+
+// ── Fill modal ──
+let fillT=null;
+function openFill(sid,ei){
+  fillT={sid,ei};
+  const emp=stores[sid].employees[ei];
+  document.getElementById('fi-sub').textContent=`${emp}　${YEAR}年${month}月`;
+  document.getElementById('mb-fill').classList.add('open');
+}
+function closeFill(){ document.getElementById('mb-fill').classList.remove('open'); fillT=null; }
+function doFill(type){
+  if(!fillT) return;
+  const {sid,ei}=fillT, emp=stores[sid].employees[ei], total=dim(YEAR,month);
+  for(let d=1;d<=total;d++){
+    const k=K(sid,emp,d);
+    if(type===null) delete stores[sid].data[k]; else stores[sid].data[k]={type};
+  }
+  closeFill(); renderAll();
+}
+
+// ── Manage employees modal ──
+let manageT=null;
+function openManage(sid){
+  manageT=sid;
+  const names={hp:'宏平門市',kl:'康利門市'};
+  document.getElementById('mg-title').textContent='管理員工';
+  document.getElementById('mg-sub').textContent=names[sid];
+  renderManageList();
+  document.getElementById('mb-manage').classList.add('open');
+}
+function renderManageList(){
+  if(!manageT) return;
+  const emps=stores[manageT].employees;
+  if(emps.length===0){
+    document.getElementById('mg-list').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px 0">尚無員工</div>';
+    return;
+  }
+  document.getElementById('mg-list').innerHTML=emps.map((emp,idx)=>
+    `<div class="emp-row">
+      <span class="emp-row-name">${emp}</span>
+      <button class="emp-del" onclick="delFromManage(${idx})">刪除</button>
+    </div>`
+  ).join('');
+}
+function delFromManage(idx){
+  openDel(manageT, idx, true);
+}
+function confirmManageAdd(){
+  const input=document.getElementById('mg-name');
+  const n=input.value.trim();
+  if(!n){input.focus();return;}
+  stores[manageT].employees.push(n);
+  input.value='';
+  input.focus();
+  renderAll();
+  renderManageList();
+}
+function closeManage(){ document.getElementById('mb-manage').classList.remove('open'); manageT=null; }
+
+// ── Delete employee ──
+let delT=null;
+function openDel(sid,idx,fromManage=false){
+  delT={sid,idx,fromManage};
+  document.getElementById('dl-msg').textContent=`確定要刪除「${stores[sid].employees[idx]}」？此操作無法復原。`;
+  document.getElementById('mb-del').classList.add('open');
+}
+function closeDel(){ document.getElementById('mb-del').classList.remove('open'); delT=null; }
+function confirmDel(){
+  if(!delT) return;
+  const {sid,idx,fromManage}=delT;
+  stores[sid].employees.splice(idx,1);
+  renderAll();
+  if(fromManage) renderManageList();
+  closeDel();
+}
+
+// ── Rename ──
+function renameBlur(el){
+  const sid=el.dataset.sid, idx=parseInt(el.dataset.ei);
+  const newN=el.textContent.trim(), oldN=stores[sid].employees[idx];
+  if(!newN){el.textContent=oldN;return;}
+  if(newN===oldN) return;
+  const nd={};
+  Object.keys(stores[sid].data).forEach(k=>{
+    const p=k.split('|');
+    if(p[1]===oldN){p[1]=newN;nd[p.join('|')]=stores[sid].data[k];}else nd[k]=stores[sid].data[k];
+  });
+  stores[sid].data=nd; stores[sid].employees[idx]=newN;
+}
+function renameKey(e,el){
+  if(e.key==='Enter'){e.preventDefault();el.blur();}
+  if(e.key==='Escape'){el.textContent=stores[el.dataset.sid].employees[parseInt(el.dataset.ei)];el.blur();}
+}
+
+renderAll();
+</script>
+</body>
+</html>
