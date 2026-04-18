@@ -1017,11 +1017,16 @@ tbody td.nc{text-align:left;padding:0 5pt;font-size:12pt;font-weight:700;border-
 .cC{background:#FAF0E0;color:#7A5020}
 </style></head><body>${pages}</body></html>`;
 
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const w = window.open(url, '_blank');
-  if(!w) { alert('請允許此頁面開啟彈出視窗後再試一次'); return; }
-  setTimeout(()=>{ w.focus(); w.print(); URL.revokeObjectURL(url); }, 1200);
+  // 用隱藏 iframe 列印，不需要開新視窗
+  let iframe = document.getElementById('__print_frame');
+  if (iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = '__print_frame';
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none';
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 1000);
 }
 
 // ── JSON Export / Import ──
