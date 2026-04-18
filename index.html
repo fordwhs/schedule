@@ -170,18 +170,23 @@ tbody tr:hover .fb{opacity:1}
 .csep{height:1px;background:var(--border);margin:4px 0}
 
 @media print{
-  .hdr-r,.btn-manage,.del-btn,.fb,.week-bar{display:none!important}
+  .hdr-r,.btn-manage,.del-btn,.fb,.week-bar,.legend,.sh-r{display:none!important}
   .mb,.ctx{display:none!important}
   .hdr{position:static}
   .main{padding:6px}
   .tw{box-shadow:none;border-radius:4px}
   .cell{min-height:34px}
   .chip{font-size:8px;padding:1px 4px}
-  /* hide screen label, show full time */
   .chip[data-print] .chip-screen{display:none}
   .chip[data-print]::after{content:attr(data-print);font-size:8px;white-space:pre}
+  .print-header{display:none!important}
+  .section{page-break-after:always;margin-bottom:0}
+  .section:last-child{page-break-after:avoid}
+  .section-print-title{display:block!important;font-size:14px;font-weight:500;margin-bottom:6px;letter-spacing:.04em;color:#000}
   @page{size:A4 landscape;margin:8mm}
 }
+.print-header{display:none}
+.section-print-title{display:none}
 </style>
 </head>
 <body>
@@ -217,6 +222,7 @@ tbody tr:hover .fb{opacity:1}
 </div>
 
 <div class="main">
+  <div class="print-header" id="print-header"></div>
   <div class="legend">
     <div class="li"><span class="chip cA">早</span>07–15</div>
     <div class="ls">·</div>
@@ -225,16 +231,12 @@ tbody tr:hover .fb{opacity:1}
     <div class="li"><span class="chip cN">夜</span>23–07</div>
     <div class="ls">·</div>
     <div class="li"><span class="chip cO">休</span>放假</div>
-    <div class="ls">·</div>
-    <div class="li"><span class="chip cADJ">調</span>彈性工時</div>
     <div class="lh">點擊循環切換　｜　拖曳複製多天　｜　右鍵更多選項</div>
   </div>
 
   <div class="section">
+    <div class="section-print-title" id="hp-print-title"></div>
     <div class="sh">
-      <div class="sl">
-        <div class="dot" style="background:var(--hp)"></div>
-        <div class="sn-txt" style="color:var(--hp)">宏平門市</div>
         <div class="sc-txt" id="hp-cnt"></div>
       </div>
       <div class="sh-r">
@@ -245,6 +247,7 @@ tbody tr:hover .fb{opacity:1}
   </div>
 
   <div class="section">
+    <div class="section-print-title" id="kl-print-title"></div>
     <div class="sh">
       <div class="sl">
         <div class="dot" style="background:var(--kl)"></div>
@@ -360,8 +363,7 @@ tbody tr:hover .fb{opacity:1}
   <div class="ci" onclick="ctxSet('N')"><span class="chip cN">夜</span>大夜班 23–07</div>
   <div class="ci" onclick="ctxSet('OFF')"><span class="chip cO">休</span>放假</div>
   <div class="csep"></div>
-  <div class="ci" onclick="ctxAdj()"><span class="chip cADJ" style="font-size:10px;padding:2px 6px">調</span>彈性調整工時…</div>
-  <div class="ci" onclick="ctxCustom()">⚙ 完全自訂時間…</div>
+  <div class="ci" onclick="ctxCustom()">⚙ 自訂時間…</div>
   <div class="csep"></div>
   <div class="ci" onclick="ctxClear()" style="color:var(--so)">✕ 清除</div>
 </div>
@@ -371,7 +373,7 @@ const YEAR = 2026;
 let month = 5;
 let weekIdx = 0; // 0-based week index within month
 
-const CYCLE = [null,'A','P','N','OFF','ADJ'];
+const CYCLE = [null,'A','P','N','OFF'];
 const SI = { A:{l:'早',c:'cA'}, P:{l:'晚',c:'cP'}, N:{l:'夜',c:'cN'}, OFF:{l:'休',c:'cO'} };
 const BASE_TIMES = { A:{s:'07:00',e:'15:00'}, P:{s:'15:00',e:'23:00'}, N:{s:'23:00',e:'07:00'} };
 
@@ -457,6 +459,13 @@ function renderAll() {
 
   renderStore('hp', week);
   renderStore('kl', week);
+
+  // 列印標題（每個門市獨立一行）
+  const dateRange = `${YEAR}年${month}月　第${weekIdx+1}週　${month}月${first}日（${dn(dow(YEAR,month,first))}）－ ${month}月${last}日（${dn(dow(YEAR,month,last))}）`;
+  const hpPT = document.getElementById('hp-print-title');
+  const klPT = document.getElementById('kl-print-title');
+  if (hpPT) hpPT.textContent = `宏平門市　${dateRange}`;
+  if (klPT) klPT.textContent = `康利門市　${dateRange}`;
 }
 
 const PRINT_LABEL = {
