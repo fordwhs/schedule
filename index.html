@@ -263,7 +263,7 @@ tbody tr:hover .fb{opacity:1}
       <option value="11">2026年 11月</option>
       <option value="12">2026年 12月</option>
     </select>
-    <button class="btn exp" onclick="printSchedule()">匯出 PDF</button>
+    <button class="btn exp" onclick="printSchedule()">匯出 PDF（整月）</button>
   </div>
 </div>
 
@@ -499,6 +499,33 @@ function getWeeks(y, m) {
     weeks.push(week);
   }
   return weeks;
+}
+
+// 把整月平均切成4份（給列印用），每份包含連續日期陣列
+// 每份固定7欄（補null對齊日到六），但日期範圍按均分決定
+function getMonthQuarters(y, m) {
+  const total = dim(y, m);
+  // 把 total 天平均切成4段，盡量均等
+  const quarters = [];
+  const base = Math.floor(total / 4);
+  const extra = total % 4; // 前 extra 段多1天
+  let cursor = 1;
+  for (let q = 0; q < 4; q++) {
+    const len = base + (q < extra ? 1 : 0);
+    const days = [];
+    for (let d = cursor; d < cursor + len; d++) days.push(d);
+    cursor += len;
+    // 補齊成7的倍數（前後補null讓日曆對齊星期）
+    const firstW = dow(y, m, days[0]);
+    const lastW  = dow(y, m, days[days.length-1]);
+    const padded = [
+      ...Array(firstW).fill(null),
+      ...days,
+      ...Array(6 - lastW).fill(null)
+    ];
+    quarters.push(padded);
+  }
+  return quarters;
 }
 
 function todayDayOfMonth() {
@@ -921,14 +948,10 @@ function renameKey(e,el){
   if(e.key==='Escape'){el.textContent=stores[el.dataset.sid].employees[parseInt(el.dataset.ei)];el.blur();}
 }
 
-// ── Print ──
+// ── Print whole month ──
 function printSchedule() {
-  const weeks = getWeeks(YEAR, month);
-  const week = weeks[weekIdx];
-  const days = week.filter(Boolean);
-  const first = days[0], last = days[days.length-1];
+  const quarters = getMonthQuarters(YEAR, month);
   const DOW = ['日','一','二','三','四','五','六'];
-  const dateRange = `${YEAR}年${month}月　第${weekIdx+1}週　${month}月${first}日（${DOW[dow(YEAR,month,first)]}）－ ${month}月${last}日（${DOW[dow(YEAR,month,last)]}）`;
 
   function shiftHTML(sh) {
     if(!sh) return '';
@@ -943,17 +966,22 @@ function printSchedule() {
     return m ? `<span class="chip ${m.cls}">${m.label}</span>` : '';
   }
 
-  function buildTable(sid) {
+  function buildTable(sid, week, wIdx) {
     const st = stores[sid];
     const storeName = {hp:'宏平門市',kl:'康利門市'}[sid];
+    const days = week.filter(Boolean);
+    if(!days.length) return '';
+    const first = days[0], last = days[days.length-1];
+    const dateRange = `${YEAR}年${month}月　第${wIdx+1}期　${month}月${first}日（${DOW[dow(YEAR,month,first)]}）－ ${month}月${last}日（${DOW[dow(YEAR,month,last)]}）`;
+    const cols = week.length;
     let t = `<div class="store-title">${storeName}　${dateRange}</div><table>`;
-    t += '<colgroup><col class="cn">';
-    for(let i=0;i<7;i++) t += '<col class="cd">';
+    t += `<colgroup><col class="cn">`;
+    for(let i=0;i<cols;i++) t += `<col class="cd">`;
     t += '</colgroup><thead><tr><th class="th-name">姓名</th>';
     week.forEach((d,i)=>{
       if(!d){ t += '<th></th>'; return; }
-      const we = i===0||i===6;
-      t += `<th class="${we?'we':''}"><span class="td">${d}</span><span class="tw2">${DOW[i]}</span></th>`;
+      const we = dow(YEAR,month,d)===0 || dow(YEAR,month,d)===6;
+      t += `<th class="${we?'we':''}"><span class="td">${d}</span><span class="tw2">${DOW[dow(YEAR,month,d)]}</span></th>`;
     });
     t += '</tr></thead><tbody>';
     st.employees.forEach(emp=>{
@@ -969,6 +997,15 @@ function printSchedule() {
     return t;
   }
 
+  // 4段，每段：hp一頁 + kl一頁，共8頁
+  let pages = '';
+  quarters.forEach((quarter, qIdx)=>{
+    const days = quarter.filter(Boolean);
+    if(!days.length) return;
+    pages += `<div class="page">${buildTable('hp', quarter, qIdx)}</div>`;
+    pages += `<div class="page">${buildTable('kl', quarter, qIdx)}</div>`;
+  });
+
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -979,7 +1016,7 @@ body{font-family:'Microsoft JhengHei','PingFang TC','Noto Sans TC',sans-serif;ba
 .store-title{font-size:13pt;font-weight:700;margin-bottom:6pt;color:#000;letter-spacing:.03em}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 col.cn{width:58pt}
-col.cd{width:calc((100% - 58pt)/7)}
+col.cd{}
 thead tr{background:#ececec}
 thead th{padding:4pt 2pt;text-align:center;font-size:9pt;font-weight:700;border:0.5pt solid #bbb;color:#000}
 thead th.th-name{text-align:left;padding-left:6pt}
@@ -993,15 +1030,53 @@ tbody td.nc{text-align:left;padding:0 5pt;font-size:12pt;font-weight:700;border-
 .cA{background:#E6F4EA;color:#2A6B3C}.cP{background:#E6EFF8;color:#1A4A8A}
 .cN{background:#F0E8F8;color:#5A2D8A}.cO{background:#FAE8E6;color:#9E3A2A}
 .cC{background:#FAF0E0;color:#7A5020}
-</style></head><body>
-<div class="page">${buildTable('hp')}</div>
-<div class="page">${buildTable('kl')}</div>
-</body></html>`;
+</style></head><body>${pages}</body></html>`;
 
   const w = window.open('','_blank');
   w.document.write(html);
   w.document.close();
   setTimeout(()=>{ w.focus(); w.print(); }, 800);
+}
+
+// ── JSON Export / Import ──
+function exportJSON() {
+  const payload = JSON.stringify({ stores: { hp: stores.hp, kl: stores.kl } }, null, 2);
+  const blob = new Blob([payload], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `排班資料_${YEAR}年.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const saved = JSON.parse(ev.target.result);
+        if(saved.stores) {
+          ['hp','kl'].forEach(sid=>{
+            if(saved.stores[sid]){
+              stores[sid].employees = saved.stores[sid].employees || [];
+              stores[sid].data = saved.stores[sid].data || {};
+            }
+          });
+          saveData();
+          renderAll();
+          alert('匯入成功！');
+        }
+      } catch(e) { alert('匯入失敗，請確認檔案格式正確。'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 loadData();
