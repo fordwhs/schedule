@@ -169,37 +169,80 @@ tbody tr:hover .fb{opacity:1}
 .csep{height:1px;background:var(--border);margin:4px 0}
 
 @media print{
-  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .hdr,.week-bar,.legend,.sh-r,.btn-manage,.fb,.mb,.ctx{display:none!important}
-  body{background:#fff;font-size:10px}
-  .main{padding:0;max-width:none}
-  .section{page-break-after:always;page-break-inside:avoid;margin:0;padding:0}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}
+  html,body{width:297mm;height:210mm;margin:0;padding:0;background:#fff;font-family:'Noto Sans TC',sans-serif}
+  .hdr,.week-bar,.legend,.sh-r,.btn-manage,.fb,.mb,.ctx,.print-header{display:none!important}
+  .main{padding:0;margin:0;max-width:none;width:100%}
+  .section{
+    width:277mm;height:190mm;
+    margin:0;padding:10mm;
+    page-break-after:always;
+    page-break-inside:avoid;
+    display:block;
+    overflow:visible;
+  }
   .section:last-child{page-break-after:avoid}
-  .section-print-title{display:block!important;font-size:12px;font-weight:500;margin-bottom:5px;color:#000;letter-spacing:.04em}
-  .sh{margin-bottom:5px}
-  .sn-txt{font-size:12px}
-  .sc-txt{font-size:10px}
-  .tw{box-shadow:none;border-radius:0;border:1px solid #ccc;width:100%}
-  table{width:100%;table-layout:fixed;font-size:9px}
-  col.col-name{width:80px}
-  col.col-day{width:calc((100% - 80px) / 7)}
-  thead th{padding:4px 2px;font-size:9px;border-right:1px solid #ccc}
-  thead tr{background:#f0f0f0!important;border-bottom:1px solid #ccc}
-  .th-date{font-size:11px;font-weight:600}
-  .th-day{font-size:8px}
-  tbody tr{border-bottom:1px solid #eee}
-  tbody td{border-right:1px solid #eee}
-  tbody td.nc{border-right:1px solid #ccc;padding:3px 4px}
-  .en{font-size:10px;padding:0}
-  .nw{padding:3px 0}
-  .cell{min-height:28px;padding:2px}
-  .chip{font-size:8px;padding:2px 5px;border-radius:10px}
-  .chip[data-print] .chip-screen{display:none}
-  .chip[data-print]::after{content:attr(data-print);font-size:7px;white-space:pre;line-height:1.3}
+  .section-print-title{
+    display:block!important;
+    font-size:12pt;font-weight:600;
+    margin-bottom:6pt;
+    color:#000;letter-spacing:.04em;
+  }
+  .sh{margin-bottom:4pt}
+  .sn-txt,.sc-txt{display:none}
+  .tw{
+    box-shadow:none;border-radius:0;
+    border:1px solid #999;
+    width:100%;
+    overflow:visible;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:12pt;
+  }
+  col.col-name{width:72pt}
+  col.col-day{width:calc((100% - 72pt) / 7)}
+  thead tr{background:#eeeeee!important;border-bottom:1.5pt solid #999}
+  thead th{
+    padding:5pt 3pt;text-align:center;
+    font-weight:600;font-size:10pt;
+    color:#000;border-right:1pt solid #bbb;
+    white-space:nowrap;
+  }
+  thead th.th-name{text-align:left;padding-left:8pt}
+  thead th:last-child{border-right:none}
+  .th-date{font-size:13pt;font-weight:700;display:block;color:#000;line-height:1.2}
+  .th-day{font-size:9pt;display:block;color:#555;margin-top:1pt}
+  thead th.we .th-date,thead th.we .th-day{color:#b22}
+  tbody tr{border-bottom:1pt solid #ddd}
+  tbody tr:last-child{border-bottom:none}
+  tbody td{padding:0;border-right:1pt solid #ddd;vertical-align:middle}
+  tbody td.nc{padding:4pt 6pt;border-right:2pt solid #bbb;background:#fff}
+  tbody td:last-child{border-right:none}
+  .nw{padding:0;display:block}
+  .fb{display:none!important}
+  .en{font-size:12pt;font-weight:600;padding:0;display:block}
+  .cell{
+    min-height:30pt;height:30pt;
+    display:flex;align-items:center;justify-content:center;
+    padding:2pt;
+  }
   .ce{display:none}
-  .print-header{display:none!important}
-  @page{size:A4 landscape;margin:10mm;margin-top:8mm}
-  @page{marks:none}
+  .chip{
+    font-size:9pt;font-weight:500;
+    padding:2pt 5pt;border-radius:6pt;
+    display:inline-block;line-height:1.3;text-align:center;
+  }
+  .chip[data-print] .chip-screen{display:none}
+  .chip[data-print]::after{content:attr(data-print);font-size:8pt;white-space:pre;line-height:1.4}
+  .cA{background:#E6F4EA!important;color:#2A6B3C!important}
+  .cP{background:#E6EFF8!important;color:#1A4A8A!important}
+  .cN{background:#F0E8F8!important;color:#5A2D8A!important}
+  .cO{background:#FAE8E6!important;color:#9E3A2A!important}
+  .cC{background:#FAF0E0!important;color:#7A5020!important}
+  @page{size:A4 landscape;margin:0}
 }
 .print-header{display:none}
 .section-print-title{display:none}
