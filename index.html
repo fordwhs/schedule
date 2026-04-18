@@ -115,6 +115,9 @@ tbody td:last-child{border-right:none}
 .fb{font-size:10px;color:var(--text3);border:none;background:none;cursor:pointer;padding:2px 3px;border-radius:3px;opacity:0;transition:opacity .15s;line-height:1;font-family:'Noto Sans TC',sans-serif}
 tbody tr:hover .fb{opacity:1}
 .fb:hover{background:var(--surface2);color:var(--text2)}
+.drag-handle{font-size:14px;color:var(--text3);cursor:grab;padding:0 3px;line-height:1;flex-shrink:0}
+.drag-handle:active{cursor:grabbing}
+tbody tr.drag-over{outline:2px solid var(--hp);outline-offset:-2px;background:var(--hp-light,#EAF0F8)}
 
 /* ── Cell ── */
 .cell{min-height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:4px 6px;transition:background .08s;-webkit-touch-callout:none;-webkit-user-select:none}
@@ -626,7 +629,13 @@ function renderStore(sid, week) {
   // tbody
   h += '<tbody>';
   st.employees.forEach((emp, ei) => {
-    h += `<tr><td class="nc"><div class="nw">
+    h += `<tr draggable="true" data-sid="${sid}" data-ei="${ei}"
+      ondragstart="rowDragStart(event,'${sid}',${ei})"
+      ondragover="rowDragOver(event,'${sid}',${ei})"
+      ondrop="rowDrop(event,'${sid}',${ei})"
+      ondragend="rowDragEnd()"
+    ><td class="nc"><div class="nw">
+      <span class="drag-handle" title="拖曳調整順序">⠿</span>
       <span class="en" contenteditable="true" data-sid="${sid}" data-ei="${ei}" onblur="renameBlur(this)" onkeydown="renameKey(event,this)">${emp}</span>
       <button class="fb" onclick="openFill('${sid}',${ei})" title="整月填入">▦</button>
     </div></td>`;
@@ -693,6 +702,7 @@ function clearCell(sid,ei,d) {
 let isDrag=false, dSrc=null;
 function dStart(e,sid,ei,d) {
   if(e.button!==0) return;
+  if(e.target.classList.contains('drag-handle')) return;
   isDrag=false; dSrc={sid,ei,d};
   document.addEventListener('mouseup',dEnd,{once:true});
 }
@@ -917,6 +927,48 @@ function confirmDel(){
   if(fromManage) renderManageList();
   closeDel();
   saveData();
+}
+
+// ── Row drag to reorder ──
+let rowDragSrc = null;
+
+function rowDragStart(e, sid, ei) {
+  // prevent conflict with cell drag
+  rowDragSrc = { sid, ei };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', ei);
+  e.currentTarget.style.opacity = '0.4';
+}
+
+function rowDragOver(e, sid, ei) {
+  if (!rowDragSrc || rowDragSrc.sid !== sid || rowDragSrc.ei === ei) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // highlight target row
+  document.querySelectorAll(`tr[data-sid="${sid}"]`).forEach(r => r.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+
+function rowDrop(e, sid, ei) {
+  e.preventDefault();
+  if (!rowDragSrc || rowDragSrc.sid !== sid || rowDragSrc.ei === ei) return;
+  const from = rowDragSrc.ei, to = ei;
+  const emps = stores[sid].employees;
+  // move employee
+  const [moved] = emps.splice(from, 1);
+  emps.splice(to, 0, moved);
+  saveData();
+  renderStore(sid, getWeeks(YEAR, month)[weekIdx]);
+}
+
+function rowDragEnd() {
+  if (rowDragSrc) {
+    document.querySelectorAll('tr[draggable]').forEach(r => {
+      r.style.opacity = '';
+      r.classList.remove('drag-over');
+    });
+    rowDragSrc = null;
+  }
 }
 
 // ── Rename ──
